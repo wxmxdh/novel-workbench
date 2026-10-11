@@ -1,0 +1,160 @@
+.revision-analysis-page h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+.revision-analysis-page h3 {
+  font-size: 1rem;
+  margin: 0 0 10px;
+}
+.revision-analysis-page small,
+.revision-result > header > span {
+  color: var(--text-secondary);
+}
+.revision-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+  margin-top: 18px;
+}
+.revision-analysis-page label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.revision-analysis-page textarea,
+.revision-analysis-page input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--theme-line);
+  border-radius: 9px;
+  background: var(--surface-main);
+  color: var(--text-primary);
+  font: inherit;
+  line-height: 1.6;
+}
+.revision-analysis-page textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.revision-analysis-page .revision-inputs textarea {
+  height: 260px;
+  min-height: 180px;
+}
+.revision-analysis-page textarea:focus,
+.revision-analysis-page input:focus,
+.revision-analysis-page summary:focus-visible,
+.revision-analysis-page .revision-text-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.revision-analysis-page .revision-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.revision-analysis-page .revision-text-button:hover:not(:disabled) {
+  border-color: var(--theme-line-soft);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.revision-analysis-page .revision-text-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.revision-save-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.revision-save-controls > label {
+  flex: 1 1 180px;
+}
+.revision-method,
+.revision-differences {
+  margin-top: 18px;
+}
+.revision-method summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.revision-method textarea {
+  min-height: 150px;
+}
+.revision-differences {
+  border-top: 1px solid var(--theme-line-soft);
+  padding-top: 18px;
+}
+.revision-differences > header,
+.revision-change > header,
+.revision-result > header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+.revision-change {
+  margin-top: 16px;
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 11px;
+  padding: 14px;
+  background: var(--surface-main);
+}
+.revision-change-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+.revision-change-grid > label {
+  grid-column: 1 / -1;
+}
+.revision-change-grid > section {
+  min-width: 0;
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface-muted);
+}
+.revision-change pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.7;
+}
+.revision-report {
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--theme-line-soft);
+  background: var(--surface-muted);
+}
+.revision-result {
+  display: grid;
+  gap: 16px;
+}
+.revision-result .revision-skill-body {
+  min-height: 320px;
+}
+@media (max-width: 700px) {
+  .revision-inputs,
+  .revision-change-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

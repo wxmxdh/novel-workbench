@@ -1,0 +1,130 @@
+.sync-card.sync-status-card {
+  gap: 0;
+}
+.sync-status-heading,
+.sync-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sync-card.sync-status-card h2 {
+  font-size: 1.25em;
+  line-height: 1.4;
+}
+.sync-status-badge {
+  flex-shrink: 0;
+  width: 6em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  text-align: center;
+  font-size: 0.875em;
+}
+.sync-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 14px 0 20px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.sync-status-summary strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.sync-progress-panel {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--theme-line-soft);
+  min-width: 0;
+}
+.sync-progress-heading {
+  min-height: 2.8em;
+}
+.sync-progress-stage {
+  min-width: 0;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.sync-progress-count {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.sync-progress-track {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 3px;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+.sync-progress-track.indeterminate {
+  background: repeating-linear-gradient(
+    110deg,
+    var(--surface-muted) 0 12px,
+    var(--accent-soft) 12px 24px
+  );
+}
+.sync-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 160ms ease;
+}
+.sync-progress-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 14px;
+  align-items: start;
+}
+.sync-progress-copy {
+  min-width: 0;
+}
+.sync-progress-current,
+.sync-progress-secondary {
+  min-height: 1.6em;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sync-progress-secondary {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+.sync-progress-cancel {
+  width: 4.5em;
+  padding-inline: 0;
+}
+.sync-progress-cancel.is-hidden {
+  visibility: hidden;
+}
+.sync-status-records {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--theme-line-soft);
+  font-size: 0.875em;
+  color: var(--text-secondary);
+}
+.sync-status-records summary {
+  width: fit-content;
+  cursor: pointer;
+  min-height: 2em;
+  line-height: 1.6;
+}
+.sync-status-records summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.sync-status-records p {
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sync-progress-fill {
+    transition: none;
+  }
+}

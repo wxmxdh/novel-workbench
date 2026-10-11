@@ -1,0 +1,31 @@
+export default {
+  title: "Codex 独立任务",
+  description:
+    "选择本机已提供的模型。任务只在临时目录运行，不读取或修改作品文件。",
+  currentBook: "当前作品：{book}",
+  attachedSource: "首轮将附带你选择的资料：{source}",
+  refreshModels: "刷新模型",
+  modelAccessible: "Codex 模型",
+  modelPlaceholder: "选择 Codex 模型",
+  effortAccessible: "Codex 思考强度",
+  threadLabel: "独立任务：{thread}",
+  newTask: "新建任务",
+  resumePlaceholder: "恢复已有 Codex 线程编号",
+  resumeTask: "恢复任务",
+  emptyState:
+    "每次任务使用独立 Codex 对话，不会和工作台的自由讨论或剧情规划共用聊天记录。",
+  you: "你",
+  codex: "Codex",
+  notice: "提示",
+  composerPlaceholder: "写下要交给 Codex 的讨论或审阅任务",
+  permissionNote: "Codex 的文件和命令权限请求会被拒绝并显示原因。",
+  stop: "停止",
+  send: "发送给 Codex",
+  tooLong: "本次任务与所选资料合计超过 100,000 字符，请缩小资料范围后再发送。",
+  modelLoadError: "无法读取 Codex 模型。",
+  requestError: "Codex 请求失败。",
+  resumeError: "恢复 Codex 任务失败。",
+  resumedThread: "已恢复独立任务：{thread}",
+  turnInterrupted: "本轮已停止，未作为完整结果提交。",
+  turnFailed: "本轮未能完成，不能作为完整候选。"
+} as const;

@@ -1,0 +1,146 @@
+import { installWindowFrame, usesCustomWindowFrame } from "./window-frame";
+import { BrowserWindow, shell } from "electron";
+import { join } from "node:path";
+import type { AppearanceSettings, CommandType } from "@deepwrite/contracts";
+import {
+  applyNativeAppearanceChrome,
+  resolveNativeBackgroundColor
+} from "./native-appearance-chrome";
+import { loadWindowRenderer } from "./window-renderer";
+import { installTextContextMenu } from "./text-context-menu";
+import { guardWindowStartup } from "./window-startup";
+import type { StartupLog } from "./startup-log";
+
+function isSafeExternalUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const ZHUQUE_DETECTION_ORIGIN = "https://matrix.tencent.com";
+
+function isAllowedZhuqueDetectionUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).origin === ZHUQUE_DETECTION_ORIGIN;
+  } catch {
+    return false;
+  }
+}
+
+export function createDesktopWindow(
+  appearance: AppearanceSettings,
+  startup: { log: StartupLog; fail: (error: unknown) => void }
+): BrowserWindow {
+  const isDarwin = process.platform === "darwin";
+  const window = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    center: true,
+    minWidth: 1120,
+    minHeight: 700,
+    show: false,
+    ...(usesCustomWindowFrame() ? { frame: false } : {}),
+    backgroundColor: resolveNativeBackgroundColor(appearance),
+    title: "Otter Novel Workbench",
+    ...(isDarwin
+      ? {
+          titleBarStyle: "hiddenInset" as const,
+          trafficLightPosition: { x: 14, y: 10 }
+        }
+      : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      webviewTag: true
+    }
+  });
+  installTextContextMenu(window);
+  installWindowFrame(window);
+
+  window.webContents.on("console-message", (event) => {
+    if (event.level !== "error") return;
+    const match =
+      /^DEEPWRITE_SERIALIZATION_FAILURE boundary=preload\.ipcRenderer\.invoke command=([a-z][A-Za-z0-9.]{1,79}) error=DataCloneError$/.exec(
+        event.message
+      );
+    if (!match?.[1]) return;
+    startup.log.write("serialization.clone_failed", {
+      serializationFailure: {
+        boundary: "preload.ipcRenderer.invoke",
+        commandType: match[1] as CommandType,
+        errorName: "DataCloneError"
+      }
+    });
+  });
+
+  applyNativeAppearanceChrome(appearance, [window]);
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (isSafeExternalUrl(url)) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
+
+  window.webContents.on(
+    "will-attach-webview",
+    (event, webPreferences, params) => {
+      if (
+        typeof params.src !== "string" ||
+        !isAllowedZhuqueDetectionUrl(params.src)
+      ) {
+        event.preventDefault();
+        return;
+      }
+      delete webPreferences.preload;
+      webPreferences.nodeIntegration = false;
+      webPreferences.contextIsolation = true;
+      webPreferences.sandbox = true;
+    }
+  );
+
+  window.webContents.on("did-attach-webview", (_event, guestContents) => {
+    guestContents.setWindowOpenHandler(({ url }) => {
+      if (isSafeExternalUrl(url)) {
+        void shell.openExternal(url);
+      }
+      return { action: "deny" };
+    });
+    guestContents.on("will-navigate", (event, url) => {
+      if (isAllowedZhuqueDetectionUrl(url)) return;
+      event.preventDefault();
+      if (isSafeExternalUrl(url)) {
+        void shell.openExternal(url);
+      }
+    });
+  });
+
+  window.webContents.on("will-navigate", (event, url) => {
+    if (url === window.webContents.getURL()) {
+      return;
+    }
+    event.preventDefault();
+    if (isSafeExternalUrl(url)) {
+      void shell.openExternal(url);
+    }
+  });
+
+  const loading = guardWindowStartup(window, {
+    log: startup.log,
+    onFailure: startup.fail,
+    show: process.env.DEEPWRITE_SMOKE !== "1"
+  });
+
+  void loadWindowRenderer(
+    window,
+    join(__dirname, "../renderer/index.html"),
+    process.env.ELECTRON_RENDERER_URL
+  ).catch(loading.fail);
+
+  return window;
+}

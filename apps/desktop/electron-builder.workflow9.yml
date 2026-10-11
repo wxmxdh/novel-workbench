@@ -1,0 +1,6 @@
+extends: ./electron-builder.yml
+directories:
+  output: release-workflow9
+electronDist: ../../node_modules/electron/dist
+extraMetadata:
+  localBuild: stable-ui9-love-workflow-20261005

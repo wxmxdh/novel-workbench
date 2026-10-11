@@ -1,0 +1,288 @@
+<script setup lang="ts">
+import { presetLabel } from "../analysis-ui/preset-labels";
+import { createScopedTranslator } from "../../i18n";
+import { nextTick, ref, useId, watch } from "vue";
+import type { LongBookAnalysisPreset } from "@deepwrite/contracts/renderer";
+import { createId } from "@deepwrite/shared";
+import PresetEditor from "./PresetEditor.vue";
+import { uiMessage } from "../../ui-feedback";
+import {
+  MATERIAL_KIND_LABELS,
+  SKILL_KIND_LABELS
+} from "../../data/catalogWorkspace";
+import { cloneLongBookAnalysisPreset } from "./preset-draft";
+
+const t = createScopedTranslator("extras");
+
+const props = defineProps<{
+  short?: boolean;
+  open: boolean;
+  presets: readonly LongBookAnalysisPreset[];
+  saving: boolean;
+}>();
+const emit = defineEmits<{
+  close: [];
+  save: [presets: LongBookAnalysisPreset[]];
+  reset: [presetId?: string];
+}>();
+
+type PresetDraft = LongBookAnalysisPreset & {
+  selectionMode?: "single" | "multiple";
+};
+const draft = ref<PresetDraft[]>([]);
+const expandedId = ref<string | null>(null);
+const editorId = useId();
+const draggedIndex = ref<number | null>(null);
+
+watch(
+  () => [props.open, props.presets] as const,
+  ([open]) => {
+    if (open) draft.value = props.presets.map(cloneLongBookAnalysisPreset);
+    expandedId.value = null;
+    draggedIndex.value = null;
+  },
+  { immediate: true }
+);
+
+function addPreset(): void {
+  if (draft.value.length >= 50) {
+    uiMessage.warning(t("longBookAnalysis.maxPresets"));
+    return;
+  }
+  const id = createId("analysis_preset");
+  draft.value.push({
+    ...(props.short ? { selectionMode: "single" as const } : {}),
+    id,
+    name: t("longBookAnalysis.newPresetName", {
+      number: draft.value.length + 1
+    }),
+    description: props.short
+      ? t("longBookAnalysis.shortPresetDescription")
+      : t("longBookAnalysis.longPresetDescription"),
+    systemPrompt: props.short
+      ? t("longBookAnalysis.shortPresetPrompt")
+      : t("longBookAnalysis.longPresetPrompt"),
+    output: { domain: "material", kind: "other", stageId: "other" }
+  });
+  void editPreset(id);
+}
+
+function copyPreset(index: number): void {
+  const current = draft.value[index];
+  if (!current || draft.value.length >= 50) return;
+  const id = createId("analysis_preset");
+  draft.value.splice(index + 1, 0, {
+    ...cloneLongBookAnalysisPreset(current),
+    id,
+    name: t("longBookAnalysis.copyName", { name: presetLabel(current) }),
+    builtin: false
+  });
+  void editPreset(id);
+}
+
+function removePreset(index: number): void {
+  const current = draft.value[index];
+  if (!current) return;
+  if (
+    !window.confirm(
+      t("longBookAnalysis.deletePresetConfirmation", {
+        name: presetLabel(current)
+      })
+    )
+  )
+    return;
+  draft.value.splice(index, 1);
+  if (expandedId.value === current.id) expandedId.value = null;
+}
+
+function dropAt(targetIndex: number): void {
+  const sourceIndex = draggedIndex.value;
+  draggedIndex.value = null;
+  if (sourceIndex === null || sourceIndex === targetIndex) return;
+  const [preset] = draft.value.splice(sourceIndex, 1);
+  if (preset) draft.value.splice(targetIndex, 0, preset);
+}
+
+async function editPreset(id: string): Promise<void> {
+  expandedId.value = id;
+  await nextTick();
+  const editor = document.getElementById(`${editorId}-${id}`);
+  editor?.scrollIntoView({ block: "nearest" });
+  editor?.querySelector("input")?.focus({ preventScroll: true });
+}
+</script>
+
+<template>
+  <Teleport to="body">
+    <div
+      v-if="open"
+      class="analysis-modal-backdrop"
+      @click.self="emit('close')"
+    >
+      <section
+        class="analysis-preset-modal"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="
+          short
+            ? t('longBookAnalysis.shortPresetManager')
+            : t('longBookAnalysis.longPresetManager')
+        "
+      >
+        <header>
+          <div>
+            <p>
+              {{
+                t("longBookAnalysis.presetConfiguration", {
+                  kind: short
+                    ? t("longBookAnalysis.shortAnalysis")
+                    : t("longBookAnalysis.longAnalysis")
+                })
+              }}
+            </p>
+            <h2>{{ t("longBookAnalysis.presetManagement") }}</h2>
+          </div>
+          <button
+            type="button"
+            :aria-label="t('cloudBackup.close')"
+            @click="emit('close')"
+          >
+            ×
+          </button>
+        </header>
+        <div class="preset-toolbar">
+          <button
+            type="button"
+            :disabled="draft.length >= 50"
+            @click="addPreset"
+          >
+            {{ t("longBookAnalysis.addPreset") }}
+          </button>
+          <button type="button" @click="emit('reset')">
+            {{ t("longBookAnalysis.restoreAllDefaults") }}
+          </button>
+          <small>{{ t("longBookAnalysis.presetEditingHelp") }}</small>
+          <span>{{ draft.length }} / 50</span>
+        </div>
+        <div class="preset-list">
+          <article
+            v-for="(preset, index) in draft"
+            :key="preset.id"
+            :class="{ 'is-expanded': expandedId === preset.id }"
+            @dragover.prevent
+            @drop.prevent="dropAt(index)"
+          >
+            <div class="preset-card-heading">
+              <span
+                class="drag-handle"
+                draggable="true"
+                :title="t('longBookAnalysis.reorderPresets')"
+                @dragstart="draggedIndex = index"
+                @dragend="draggedIndex = null"
+                >⋮⋮</span
+              >
+              <button
+                class="preset-summary"
+                type="button"
+                :aria-expanded="expandedId === preset.id"
+                :aria-controls="`${editorId}-${preset.id}`"
+                @click="
+                  expandedId = expandedId === preset.id ? null : preset.id
+                "
+              >
+                <span class="preset-title-row">
+                  <strong>{{
+                    presetLabel(preset) || t("longBookAnalysis.unnamedPreset")
+                  }}</strong>
+                  <span class="preset-badge">{{
+                    preset.builtin
+                      ? t("longBookAnalysis.defaultPreset")
+                      : t("longBookAnalysis.custom")
+                  }}</span>
+                </span>
+                <span class="preset-description">{{
+                  presetLabel(preset, "description") ||
+                  t("longBookAnalysis.noDescription")
+                }}</span>
+                <span class="preset-meta">
+                  <span v-if="short">{{
+                    preset.selectionMode === "multiple"
+                      ? t("longBookAnalysis.multipleBooksCompact")
+                      : t("longBookAnalysis.singleBookCompact")
+                  }}</span>
+                  <span
+                    >{{
+                      preset.output.domain === "material"
+                        ? t("cloudBackup.materialLibrary")
+                        : t("cloudBackup.skillLibrary")
+                    }}
+                    ·
+                    {{
+                      preset.output.domain === "material"
+                        ? MATERIAL_KIND_LABELS[preset.output.kind]
+                        : SKILL_KIND_LABELS[preset.output.kind]
+                    }}</span
+                  >
+                </span>
+                <span class="preset-toggle">{{
+                  expandedId === preset.id
+                    ? t("longBookAnalysis.collapseEditor")
+                    : t("longBookAnalysis.expandEditor")
+                }}</span>
+              </button>
+              <div class="preset-card-actions">
+                <button
+                  type="button"
+                  :disabled="draft.length >= 50"
+                  @click="copyPreset(index)"
+                >
+                  {{ t("longBookAnalysis.copy") }}
+                </button>
+                <button
+                  v-if="preset.builtin"
+                  type="button"
+                  @click="emit('reset', preset.id)"
+                >
+                  {{ t("longBookAnalysis.restoreDefault") }}
+                </button>
+                <button
+                  v-if="!preset.builtin"
+                  class="delete-button"
+                  type="button"
+                  @click="removePreset(index)"
+                >
+                  {{ t("longBookAnalysis.delete") }}
+                </button>
+              </div>
+            </div>
+            <PresetEditor
+              v-if="expandedId === preset.id"
+              :id="`${editorId}-${preset.id}`"
+              :preset="preset"
+              :short="short"
+            />
+          </article>
+        </div>
+        <footer>
+          <button type="button" @click="emit('close')">
+            {{ t("cloudBackup.cancel") }}
+          </button>
+          <button
+            class="analysis-primary-button"
+            type="button"
+            :disabled="saving"
+            @click="emit('save', draft)"
+          >
+            {{
+              saving
+                ? t("longBookAnalysis.saving")
+                : t("longBookAnalysis.savePreset")
+            }}
+          </button>
+        </footer>
+      </section>
+    </div>
+  </Teleport>
+</template>
+
+<style scoped src="./preset-manager.css"></style>

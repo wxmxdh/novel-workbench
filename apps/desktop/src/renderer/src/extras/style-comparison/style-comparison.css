@@ -1,0 +1,68 @@
+.style-comparison-main-view {
+  position: relative;
+  grid-column: 2 / 4;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-main);
+  color: var(--text-primary);
+}
+.style-comparison-page .comparison-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+  min-width: 0;
+  margin-top: 18px;
+}
+.style-comparison-page .comparison-text-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 400;
+}
+.style-comparison-page textarea {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--surface-main);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.928571rem;
+  line-height: 1.85;
+  resize: vertical;
+}
+.style-comparison-page textarea::placeholder {
+  color: var(--text-tertiary);
+}
+.style-comparison-page .comparison-text-card textarea {
+  width: 100%;
+  margin: 0;
+  min-height: 200px;
+  height: 24vh;
+}
+.style-comparison-page button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.style-comparison-page :is(textarea, button, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+@container analysis-page (max-width: 760px) {
+  .style-comparison-page .comparison-inputs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.style-comparison-page .comparison-input-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.857143rem;
+  line-height: 1.65;
+}
+.style-comparison-page .comparison-text-card,
+.style-comparison-page .comparison-result-card {
+  padding: 0;
+}

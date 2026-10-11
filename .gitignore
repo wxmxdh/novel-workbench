@@ -1,0 +1,38 @@
+node_modules/
+.build-cache/
+.pnpm-store/
+out/
+release/
+release-experience-fix/
+release-controls-fix/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+# Local-only public-data endpoint tests may contain private deployment details.
+/apps/desktop/src/main/deepwrite-public-data-config.test.ts
+.DS_Store
+.idea/
+.vscode/
+
+# Generated packages and local profiles never belong in the source repository.
+**/release-*/
+audit-env/
+本轮施工记录/
+06_脚本工具/
+**/diagnostic-profile*/
+**/profile/
+**/endpoint.json
+**/tasks.json
+*.asar
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+
+# Machine-specific assistant configuration.
+.claude/
+.codex/

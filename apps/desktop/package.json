@@ -1,0 +1,40 @@
+{
+  "name": "@deepwrite/desktop",
+  "version": "1.6.0",
+  "description": "Local novel writing workbench based on DeepWrite",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "predev": "node ../../tools/ensure-electron-runtime.mjs",
+    "dev": "node ../../tools/run-desktop-dev.mjs",
+    "build": "electron-vite build && node ../../tools/check-renderer-build.mjs",
+    "prepreview": "node ../../tools/ensure-electron-runtime.mjs",
+    "preview": "electron-vite preview",
+    "presmoke": "node ../../tools/ensure-electron-runtime.mjs",
+    "smoke": "node scripts/electron-smoke.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@deepwrite/contracts": "workspace:*",
+    "@deepwrite/pi-runtime-adapter": "workspace:*",
+    "@deepwrite/shared": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-vue": "catalog:",
+    "electron": "catalog:",
+    "electron-builder": "catalog:",
+    "electron-updater": "catalog:",
+    "electron-vite": "catalog:",
+    "naive-ui": "catalog:",
+    "pdfjs-dist": "catalog:",
+    "pinia": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:",
+    "vue-i18n": "catalog:",
+    "vue-tsc": "catalog:"
+  }
+}

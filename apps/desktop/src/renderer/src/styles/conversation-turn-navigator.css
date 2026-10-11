@@ -1,0 +1,137 @@
+.conversation-turn-navigator {
+  position: absolute;
+  z-index: 16;
+  top: 50%;
+  right: -14px;
+  width: 100%;
+  height: 84px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.conversation-turn-marker-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 44px;
+  height: 84px;
+  margin: 0 0 0 auto;
+  padding: 4px 0;
+  overflow: hidden;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.conversation-turn-marker-list > li {
+  width: 44px;
+  min-height: 1px;
+  max-height: 20px;
+  flex: 1 1 20px;
+}
+
+.conversation-turn-marker {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 100%;
+  min-height: 1px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.conversation-turn-marker:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: -4px;
+}
+
+.conversation-turn-marker-line {
+  display: block;
+  width: 8px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-tertiary) 42%, var(--surface-main));
+  transition:
+    width 120ms ease,
+    background-color 120ms ease;
+}
+
+.conversation-turn-marker.is-active .conversation-turn-marker-line {
+  background: var(--text-secondary);
+}
+
+.conversation-turn-marker:hover .conversation-turn-marker-line,
+.conversation-turn-marker:focus-visible .conversation-turn-marker-line {
+  width: 26px;
+  background: var(--text-secondary);
+}
+
+.conversation-turn-preview {
+  position: absolute;
+  z-index: 2;
+  right: 40px;
+  display: grid;
+  gap: 7px;
+  width: min(540px, calc(100% - 56px));
+  padding: 14px 16px 15px;
+  overflow: hidden;
+  border: 1px solid var(--theme-line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface-raised) 97%, transparent);
+  box-shadow:
+    0 16px 38px color-mix(in srgb, var(--theme-foreground) 15%, transparent),
+    0 2px 9px color-mix(in srgb, var(--theme-foreground) 7%, transparent);
+  color: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  cursor: pointer;
+  transform: translate(7px, -50%) scale(0.985);
+  transform-origin: right center;
+  transition:
+    opacity 130ms ease,
+    transform 150ms ease,
+    visibility 0s linear 150ms;
+  visibility: hidden;
+}
+
+.conversation-turn-preview strong,
+.conversation-turn-preview > span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.conversation-turn-preview strong {
+  color: var(--text-primary);
+  font-size: 0.928571rem;
+  font-weight: 620;
+  line-height: 1.5;
+  -webkit-line-clamp: 2;
+}
+
+.conversation-turn-preview > span {
+  color: var(--text-tertiary);
+  font-size: 0.857143rem;
+  line-height: 1.55;
+  -webkit-line-clamp: 2;
+}
+
+.conversation-turn-preview.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(0, -50%) scale(1);
+  transition-delay: 0s;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversation-turn-navigator,
+  .conversation-turn-marker-line,
+  .conversation-turn-preview {
+    transition: none;
+  }
+}

@@ -1,0 +1,330 @@
+.agent-user-input-card {
+  display: grid;
+  gap: 14px;
+  max-height: min(68vh, 620px);
+  padding: 20px 16px 14px;
+  overflow: hidden;
+  border: 1px solid var(--theme-line);
+  border-radius: 20px;
+  background: var(--surface-raised);
+  box-shadow:
+    0 18px 44px var(--shadow-color),
+    0 2px 8px
+      color-mix(
+        in srgb,
+        var(--theme-foreground, var(--text-primary)) 8%,
+        transparent
+      );
+  color: var(--text-primary);
+  font-size: 0.857143rem;
+  line-height: 1.45;
+}
+
+.agent-user-input-heading,
+.agent-user-input-option,
+.agent-user-input-actions,
+.agent-user-input-actions > div,
+.agent-user-input-custom-trigger {
+  display: flex;
+  align-items: center;
+}
+
+.agent-user-input-heading {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 2px;
+}
+
+.agent-user-input-heading strong {
+  min-width: 0;
+  font-size: 1.142857rem;
+  font-weight: 680;
+  line-height: 1.35;
+}
+
+.agent-user-input-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.agent-user-input-close:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.agent-user-input-questions {
+  display: grid;
+  gap: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.agent-user-input-question {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.agent-user-input-options {
+  display: grid;
+  gap: 4px;
+}
+
+.agent-user-input-option {
+  gap: 11px;
+  width: 100%;
+  min-height: 58px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-user-input-option:hover:not(:disabled),
+.agent-user-input-option.is-selected,
+.agent-user-input-option.is-recommended {
+  background: var(--surface-muted);
+}
+
+.agent-user-input-option.is-selected {
+  border-color: var(--theme-line);
+  background: var(--surface-selected);
+}
+
+.agent-user-input-choice-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border: 1px solid var(--theme-line);
+  border-radius: 50%;
+  background: var(--surface-main);
+  color: var(--text-tertiary);
+  font-size: 0.857143rem;
+  font-weight: 520;
+}
+
+.agent-user-input-option.is-selected .agent-user-input-choice-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface-main);
+}
+
+.agent-user-input-option-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.agent-user-input-option-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.agent-user-input-option-title strong {
+  overflow: hidden;
+  font-size: 0.928571rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-user-input-option-title small {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: var(--surface-selected);
+  color: var(--text-secondary);
+  font-size: 0.714286rem;
+  line-height: 1.5;
+}
+
+.agent-user-input-description {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 0.821429rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-user-input-tooltip {
+  position: fixed;
+  z-index: 2000;
+  box-sizing: border-box;
+  max-width: calc(100vw - 24px);
+  max-height: min(60vh, 460px);
+  padding: 12px 14px;
+  overflow: auto;
+  border: 1px solid var(--theme-line);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  box-shadow: 0 10px 28px var(--shadow-color);
+  color: var(--text-primary);
+  font-size: 0.857143rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+
+.agent-user-input-tooltip strong {
+  display: block;
+  font-weight: 650;
+}
+
+.agent-user-input-tooltip p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+}
+
+.agent-user-input-tooltip-enter-active,
+.agent-user-input-tooltip-leave-active {
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.agent-user-input-tooltip-enter-from,
+.agent-user-input-tooltip-leave-to {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-user-input-tooltip-enter-active,
+  .agent-user-input-tooltip-leave-active {
+    transition: none;
+  }
+}
+
+.agent-user-input-arrow {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+}
+
+.agent-user-input-custom-trigger {
+  align-self: start;
+  gap: 9px;
+  min-height: 34px;
+  padding: 2px 4px 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.agent-user-input-custom-trigger > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--theme-line);
+  border-radius: 50%;
+  background: var(--surface-main);
+}
+
+.agent-user-input-custom-trigger:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.agent-user-input-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 62px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--theme-line);
+  border-radius: 11px;
+  outline: none;
+  background: var(--surface-main);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.agent-user-input-text:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.agent-user-input-actions {
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.agent-user-input-actions > span {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-user-input-actions > div {
+  gap: 8px;
+  margin-left: auto;
+}
+
+.agent-user-input-submit,
+.agent-user-input-skip {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  font-size: 0.857143rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.agent-user-input-submit {
+  border: 0;
+  background: var(--neutral-solid);
+  color: var(--surface-main);
+}
+
+.agent-user-input-skip {
+  border: 1px solid var(--theme-line);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.agent-user-input-skip:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.agent-user-input-card button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+@media (max-height: 760px) {
+  .agent-user-input-card {
+    gap: 10px;
+    padding-top: 14px;
+  }
+
+  .agent-user-input-option {
+    min-height: 52px;
+  }
+}

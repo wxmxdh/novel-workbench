@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "enabled": false,
+  "channel": "stable",
+  "version": "1.6.0",
+  "title": "Otter Novel Workbench 1.6.0 local build",
+  "publishedAt": "2026-10-01T00:00:00+08:00",
+  "releaseNotes": [],
+  "mandatory": false,
+  "releasePage": "https://example.invalid/local-build",
+  "feedUrl": "https://example.invalid/disabled-updates"
+}

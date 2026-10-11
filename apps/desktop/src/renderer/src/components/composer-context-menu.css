@@ -1,0 +1,176 @@
+.composer-context-menu {
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 9px;
+  border: 1px solid var(--theme-line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
+  box-shadow:
+    0 18px 46px color-mix(in srgb, var(--theme-foreground) 16%, transparent),
+    0 3px 10px color-mix(in srgb, var(--theme-foreground) 10%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  color: var(--text-primary);
+  font-family: var(--ui-font);
+}
+.context-picker-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 7px 5px 11px;
+}
+.context-picker-heading strong {
+  font-size: 0.928571rem;
+  font-weight: 620;
+}
+.context-picker-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.context-picker-close:hover {
+  background: var(--surface-hover);
+}
+.context-picker-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.context-search {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  margin: 0 3px 5px;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--theme-line-soft);
+  color: var(--text-tertiary);
+}
+.context-search:focus-within {
+  border-bottom-color: var(--accent);
+}
+.context-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.857143rem;
+}
+.context-search input::placeholder {
+  color: var(--text-tertiary);
+}
+.context-picker-list {
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+.context-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.context-option:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.context-option:active:not(:disabled),
+.context-option.is-current {
+  background: var(--surface-selected);
+}
+.context-option:focus-visible,
+.context-picker-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.context-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.context-option-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+.context-option-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.context-option-copy strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 0.928571rem;
+  font-weight: 540;
+  line-height: 1.45;
+}
+.context-option-copy small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+  font-size: 0.785714rem;
+  line-height: 1.4;
+}
+.context-option > svg {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.context-current {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.context-picker-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px 10px;
+  color: var(--text-tertiary);
+  font-size: 0.857143rem;
+  text-align: center;
+}
+.context-picker-empty strong {
+  color: var(--text-secondary);
+}
+:global(html[data-theme="dark"] .composer-context-menu) {
+  box-shadow:
+    0 20px 52px color-mix(in srgb, var(--theme-foreground) 38%, transparent),
+    0 3px 12px color-mix(in srgb, var(--theme-foreground) 28%, transparent);
+}

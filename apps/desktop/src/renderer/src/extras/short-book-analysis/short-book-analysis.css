@@ -1,0 +1,198 @@
+.short-source-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.short-source-workspace.is-expanded {
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+}
+.short-list-pane,
+.short-text-editor {
+  min-width: 0;
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 12px;
+  background: var(--surface-main);
+}
+.short-list-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--theme-line-soft);
+  font-size: 0.857143rem;
+}
+.short-list-heading span,
+.short-book-list small,
+.short-text-editor small {
+  color: var(--text-tertiary);
+}
+.short-book-list {
+  list-style: none;
+  padding: 6px;
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+}
+.short-book-list li {
+  display: flex;
+  gap: 8px;
+  padding: 5px;
+  margin: 2px 0;
+  border-radius: 8px;
+  align-items: center;
+}
+.short-book-list li.selected {
+  background: var(--surface-selected);
+}
+.short-book-analysis-page .short-book-list .short-book-open {
+  display: grid;
+  justify-content: start;
+  text-align: left;
+  gap: 4px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  flex: 1;
+  border-color: transparent;
+  background: transparent;
+}
+.short-book-analysis-page .short-book-remove {
+  flex: none;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  border-color: transparent;
+  background: transparent;
+}
+.short-book-analysis-page .short-book-remove:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.short-text-editor {
+  padding: 12px;
+}
+.short-text-editor label {
+  color: var(--text-secondary);
+  font-size: 0.857143rem;
+}
+.short-text-editor small {
+  font-size: 0.785714rem;
+  line-height: 1.5;
+}
+.short-selection-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid var(--theme-line);
+  border-radius: 8px;
+  background: var(--surface-main);
+  font-size: 0.857143rem;
+}
+.short-selection-summary small {
+  color: var(--text-tertiary);
+  font-size: 0.785714rem;
+}
+.short-paste-dialog button {
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 9px;
+  min-height: 34px;
+  padding: 7px 11px;
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.short-paste-dialog button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.short-paste-dialog .analysis-primary-button {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--surface-main);
+}
+.short-paste-dialog button:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+.short-text-editor textarea:focus-visible,
+.short-paste-dialog :is(input, textarea, button):focus-visible {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.short-text-editor,
+.short-text-editor label,
+.short-paste-dialog label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.short-text-editor input,
+.short-text-editor textarea,
+.short-paste-dialog input,
+.short-paste-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid var(--theme-line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font: inherit;
+  line-height: 1.7;
+}
+.short-text-editor textarea,
+.short-paste-dialog textarea {
+  min-height: 300px;
+  resize: vertical;
+}
+.short-paste-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, #000 44%, transparent);
+  color: var(--text-primary);
+}
+.short-paste-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(760px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  background: var(--surface-raised);
+  border: 1px solid var(--theme-line);
+  border-radius: 16px;
+}
+.short-paste-dialog h2 {
+  margin: 0;
+}
+.short-paste-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+@container analysis-page (max-width: 700px) {
+  .short-source-workspace.is-expanded {
+    grid-template-columns: 1fr;
+  }
+  .short-book-list {
+    max-height: 200px;
+  }
+}
+
+.short-book-list input:is([type="checkbox"], [type="radio"]) {
+  accent-color: var(--accent);
+}
+
+.short-source-workspace:not(.is-expanded) .short-book-list {
+  max-height: 160px;
+}

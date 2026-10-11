@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DeepWrite IPC clone boundary probe</title>
+  </head>
+  <body>
+    <script type="module">
+      import { reactive, isProxy } from "vue";
+      import { buildConversationRestore } from "../../src/renderer/src/composables/agent-conversation/history.ts";
+      import { submitConversationTurn } from "../../src/renderer/src/composables/agent-conversation/send-transport.ts";
+
+      const timestamp = "2026-10-04T00:00:00.000Z";
+      const messages = reactive([
+        {
+          id: "synthetic-user",
+          role: "user",
+          content: "synthetic previous turn",
+          createdAt: timestamp
+        },
+        {
+          id: "synthetic-assistant",
+          role: "assistant",
+          content: "synthetic summary",
+          createdAt: timestamp,
+          contextCompactions: [
+            {
+              id: "synthetic-compaction",
+              status: "completed",
+              reason: "threshold",
+              createdAt: timestamp,
+              checkpoint: {
+                schemaVersion: 1,
+                summary: "Synthetic checkpoint summary.",
+                tokensBefore: 12000,
+                createdAt: timestamp,
+                refs: {
+                  read: ["synthetic:read"],
+                  proposed: ["synthetic:proposal"],
+                  skills: ["synthetic:skill"],
+                  materials: ["synthetic:material"]
+                }
+              }
+            }
+          ]
+        }
+      ]);
+      const restored = buildConversationRestore(messages);
+      const reactiveCheckpoint =
+        messages[1].contextCompactions[0].checkpoint;
+      const turn = {
+        sessionId: "synthetic-session",
+        message: "hi",
+        history: restored.history,
+        checkpoint: reactiveCheckpoint,
+        replaceHistory: false,
+        attachments: [],
+        model: {}
+      };
+
+      window.runCloneBoundaryProbe = async () => {
+        const restoreCheckpointIsPlain = !isProxy(restored.checkpoint);
+        const submitCheckpointIsProxy = isProxy(turn.checkpoint);
+        const chat = await submitConversationTurn(window.deepwrite, turn, {
+          chatTask: {
+            agentId: "chat-normal",
+            profileId: "builtin",
+            input: {}
+          }
+        });
+        const workspace = await submitConversationTurn(
+          window.deepwrite,
+          turn,
+          { workspace: {} }
+        );
+        return {
+          restoreCheckpointIsPlain,
+          submitCheckpointIsProxy,
+          chatSessionId: chat.sessionId,
+          workspaceSessionId: workspace.sessionId
+        };
+      };
+    </script>
+  </body>
+</html>

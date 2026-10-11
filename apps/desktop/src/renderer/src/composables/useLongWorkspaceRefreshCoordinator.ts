@@ -1,0 +1,180 @@
+import { formatError } from "../i18n/errors";
+import { createScopedTranslator } from "../i18n";
+import {
+  createLongWorkspaceNavigationSnapshot,
+  type LongBookSummary,
+  type LongWorkspaceIndexSnapshot,
+  type LongWriteDocumentResult
+} from "@deepwrite/contracts";
+import type { Ref } from "vue";
+import type {
+  LongWorkspaceFileContext,
+  LongWorkspaceRefreshStatus
+} from "../stores/longWorkspaceStore";
+import {
+  reconcileLongWorkspaceSelection,
+  replaceLongBookSummary,
+  type LongWorkspaceRendererApi,
+  type LongWorkspaceSelection
+} from "../types/longWorkspace";
+import { createLongWorkspaceRefreshClock } from "../utils/longWorkspaceRefresh";
+
+const t = createScopedTranslator("workspace.longWorkspaceRefreshCoordinator");
+
+interface LongWorkspaceRefreshState {
+  longBooks: Ref<readonly LongBookSummary[]>;
+  activeBookId: Ref<string | null>;
+  activeBookSummary: Readonly<Ref<LongBookSummary | null>>;
+  workspaceIndex: Ref<LongWorkspaceIndexSnapshot | null>;
+  selection: Ref<LongWorkspaceSelection | null>;
+  fileContext: Ref<LongWorkspaceFileContext | null>;
+  refreshStatus: Ref<LongWorkspaceRefreshStatus | null>;
+  activeRefreshStatus: Readonly<Ref<LongWorkspaceRefreshStatus | null>>;
+}
+
+interface LongWorkspaceRefreshNotifications {
+  error(message: string): void;
+}
+
+export interface LongWorkspaceRefreshCoordinatorOptions {
+  state: LongWorkspaceRefreshState;
+  api(): LongWorkspaceRendererApi | undefined;
+  isDisposed(): boolean;
+  synchronizeSelectedResourceForLayout(bookId: string): void;
+  notifications: LongWorkspaceRefreshNotifications;
+}
+
+interface RefreshActiveWorkspaceOptions {
+  publishPending?: boolean;
+}
+
+/** Owns refresh ordering and passive focus reconciliation. */
+export function useLongWorkspaceRefreshCoordinator(
+  options: LongWorkspaceRefreshCoordinatorOptions
+) {
+  const { state, notifications } = options;
+  const refreshClock = createLongWorkspaceRefreshClock();
+
+  async function refreshActiveWorkspace(
+    bookId: string,
+    refreshOptions: RefreshActiveWorkspaceOptions = {}
+  ): Promise<boolean> {
+    if (options.isDisposed()) return false;
+    const api = options.api();
+    if (!api) return false;
+    const requestId = refreshClock.begin(bookId);
+    if (
+      state.activeBookId.value === bookId &&
+      refreshOptions.publishPending !== false
+    ) {
+      state.refreshStatus.value = {
+        bookId,
+        requestId,
+        pending: true,
+        error: null
+      };
+    }
+
+    try {
+      const result = await api.getWorkspaceIndex({ bookId });
+      if (
+        options.isDisposed() ||
+        state.activeBookId.value !== bookId ||
+        !refreshClock.isCurrent(bookId, requestId)
+      ) {
+        return false;
+      }
+      if (result.bookId !== bookId) {
+        throw new Error(t("theNovelWorkspaceRefreshReturnedADifferentBook"));
+      }
+      const currentSummary = state.activeBookSummary.value;
+      if (!currentSummary || currentSummary.id !== bookId) {
+        throw new Error(
+          t("theActiveNovelSummaryChangedRefreshResultsCannotBe")
+        );
+      }
+      const nextSummary: LongBookSummary = {
+        ...currentSummary,
+        updatedAt: result.workspaceIndex.updatedAt,
+        navigation: createLongWorkspaceNavigationSnapshot(result.workspaceIndex)
+      };
+      const currentSelection = state.selection.value;
+      const nextSelection = currentSelection
+        ? (reconcileLongWorkspaceSelection(
+            nextSummary,
+            result.workspaceIndex,
+            currentSelection
+          ) ?? null)
+        : null;
+      const activeFileId = state.fileContext.value?.fileId;
+      const nextFile = nextSelection?.files.find(
+        ({ file }) => file.id === activeFileId
+      )?.file;
+
+      // Publish the matching index, summary, selection and file context as one
+      // synchronous boundary.
+      state.workspaceIndex.value = result.workspaceIndex;
+      state.longBooks.value = replaceLongBookSummary(
+        state.longBooks.value,
+        nextSummary
+      );
+      if (currentSelection) {
+        state.selection.value = nextSelection;
+        state.fileContext.value = nextFile
+          ? {
+              bookId,
+              fileId: nextFile.id
+            }
+          : null;
+      }
+      options.synchronizeSelectedResourceForLayout(bookId);
+      state.refreshStatus.value = null;
+      return true;
+    } catch (error: unknown) {
+      if (
+        !options.isDisposed() &&
+        state.activeBookId.value === bookId &&
+        refreshClock.isCurrent(bookId, requestId)
+      ) {
+        const message = formatError(
+          error,
+          t("failedToRefreshTheNovelWorkspaceIndex")
+        );
+        state.refreshStatus.value = {
+          bookId,
+          requestId,
+          pending: false,
+          error: message
+        };
+        notifications.error(message);
+      }
+      return false;
+    }
+  }
+
+  function handleDocumentSaved(result: LongWriteDocumentResult): void {
+    void refreshActiveWorkspace(result.bookId);
+  }
+
+  async function retryActiveRefresh(): Promise<void> {
+    const bookId = state.activeBookId.value;
+    if (!bookId || state.activeRefreshStatus.value?.pending) return;
+    await refreshActiveWorkspace(bookId);
+  }
+
+  async function refreshOnWindowFocus(bookId: string): Promise<void> {
+    await refreshActiveWorkspace(bookId, { publishPending: false });
+  }
+
+  function invalidate(bookId: string): void {
+    refreshClock.invalidate(bookId);
+  }
+
+  return {
+    refreshActiveWorkspace,
+    handleDocumentSaved,
+    retryActiveRefresh,
+    refreshOnWindowFocus,
+    invalidate
+  };
+}

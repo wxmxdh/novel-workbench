@@ -1,0 +1,3 @@
+extends: ./electron-builder.yml
+extraMetadata:
+  localBuild: stable-ui8-review-completion-20261005

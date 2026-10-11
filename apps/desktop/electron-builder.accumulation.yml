@@ -1,0 +1,5 @@
+extends: ./electron-builder.yml
+directories:
+  output: release-accumulation-20261010
+extraMetadata:
+  localBuild: accumulation-20261010

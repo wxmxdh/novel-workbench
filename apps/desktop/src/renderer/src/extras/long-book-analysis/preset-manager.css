@@ -1,0 +1,191 @@
+.analysis-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 44%, transparent);
+  color: var(--text-primary);
+}
+.analysis-preset-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 94vw);
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid var(--theme-line);
+  border-radius: 16px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 70px color-mix(in srgb, #000 30%, transparent);
+}
+.analysis-preset-modal > header,
+.analysis-preset-modal > footer,
+.preset-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--theme-line-soft);
+}
+.analysis-preset-modal > header,
+.analysis-preset-modal > footer,
+.preset-toolbar {
+  flex-shrink: 0;
+}
+.analysis-preset-modal > header p,
+.analysis-preset-modal > header h2 {
+  margin: 0;
+}
+.analysis-preset-modal > header p {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+}
+.analysis-preset-modal > header button,
+.preset-toolbar button,
+.preset-card-actions button,
+.analysis-preset-modal > footer button {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.preset-toolbar span {
+  margin-left: auto;
+  color: var(--text-tertiary);
+}
+.preset-toolbar small {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+}
+.preset-list {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 18px;
+}
+.preset-list article {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 12px;
+  background: var(--surface-main);
+}
+.preset-list article.is-expanded {
+  border-color: var(--theme-line);
+}
+.preset-card-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+.drag-handle {
+  padding-top: 3px;
+  color: var(--text-tertiary);
+  cursor: grab;
+}
+.preset-summary {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0;
+  text-align: left;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.preset-summary:hover .preset-toggle {
+  text-decoration: underline;
+}
+.analysis-preset-modal button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.analysis-preset-modal button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.preset-title-row,
+.preset-meta,
+.preset-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.preset-title-row strong {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.preset-badge,
+.preset-meta > span {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+.preset-badge {
+  flex-shrink: 0;
+}
+.preset-description,
+.preset-target {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.preset-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.preset-target,
+.preset-toggle {
+  font-size: 0.85rem;
+}
+.preset-toggle {
+  color: var(--text-primary);
+}
+.preset-card-actions button {
+  white-space: nowrap;
+}
+.analysis-preset-modal > footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--theme-line-soft);
+  border-bottom: 0;
+}
+.analysis-preset-modal .analysis-primary-button {
+  background: var(--text-primary);
+  color: var(--surface-main);
+}
+.delete-button {
+  color: var(--danger, #c64b4b) !important;
+}
+@media (max-width: 720px) {
+  .analysis-modal-backdrop {
+    padding: 12px;
+  }
+  .preset-card-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .preset-card-actions {
+    grid-column: 2;
+  }
+}
+
+.preset-toolbar {
+  flex-wrap: wrap;
+}
+.preset-toolbar button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

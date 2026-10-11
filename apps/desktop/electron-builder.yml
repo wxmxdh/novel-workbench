@@ -1,0 +1,58 @@
+appId: studio.otter.novel-workbench
+productName: Otter Novel Workbench
+artifactName: "${productName}-${version}-${os}-${arch}-local.${ext}"
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+
+asar: true
+extraFiles:
+  - from: ../../LICENSE
+    to: LICENSE-DeepWrite.txt
+  - from: ../../tools/novel-workbench-client.mjs
+    to: tools/novel-workbench-client.mjs
+beforeBuild: ./scripts/electron-builder-before-build.cjs
+
+extraMetadata:
+  homepage: https://github.com/swjybky/deepwrite
+  desktopName: Otter Novel Workbench
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.productivity
+  identity: "-"
+  hardenedRuntime: false
+  notarize: false
+  extendInfo:
+    NSMicrophoneUsageDescription: DeepWrite 使用麦克风录制语音，并通过您配置的语音服务转换为文字。
+
+win:
+  target: nsis
+  requestedExecutionLevel: asInvoker
+  forceCodeSigning: false
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Office
+  executableName: deepwrite
+  maintainer: carswj <wenjia@wenjiadeMacBook-Air.local>
+  vendor: Otter Novel Workbench
+  syncDesktopName: true
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Otter Novel Workbench
+  deleteAppDataOnUninstall: false

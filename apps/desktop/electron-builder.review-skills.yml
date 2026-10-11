@@ -1,0 +1,6 @@
+extends: ./electron-builder.yml
+directories:
+  output: release-review-skills-20261009
+electronDist: ../../node_modules/electron/dist
+extraMetadata:
+  localBuild: review-skills-20261009

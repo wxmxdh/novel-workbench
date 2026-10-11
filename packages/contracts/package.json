@@ -1,0 +1,14 @@
+{
+  "name": "@deepwrite/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./renderer": "./src/renderer.ts",
+    "./system": "./src/system.ts"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  }
+}

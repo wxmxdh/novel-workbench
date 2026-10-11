@@ -1,0 +1,104 @@
+.book-template-settings {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 12px;
+  background: var(--surface-raised);
+}
+.book-template-settings p,
+.book-template-dialog p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.template-settings-heading,
+.book-template-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.template-settings-heading {
+  justify-content: space-between;
+}
+.template-settings-heading h3 {
+  margin: 0;
+}
+.book-template-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+.book-template-list li {
+  padding: 12px 0;
+  border-top: 1px solid var(--theme-line-soft);
+}
+.book-template-list li > div {
+  flex: 1;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+.book-template-list small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+.workspace-dialog.book-template-dialog {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+}
+.book-template-form {
+  display: grid;
+  gap: 18px;
+  overflow-y: auto;
+}
+.book-template-form > label {
+  display: grid;
+  gap: 8px;
+  color: var(--text-primary);
+}
+.book-template-form input:not([type="checkbox"]):not([type="radio"]) {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-main);
+  color: var(--text-primary);
+  border: 1px solid var(--theme-line);
+  border-radius: 8px;
+  font: inherit;
+}
+.book-template-form fieldset {
+  border: 1px solid var(--theme-line-soft);
+  border-radius: 8px;
+}
+.book-template-form .template-stage {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  align-items: center;
+}
+.book-template-form .dialog-actions {
+  flex-wrap: wrap;
+}
+.template-danger-button {
+  padding: 8px 14px;
+  border: 1px solid var(--danger);
+  background: var(--danger);
+  color: white;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+.template-summary {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 18px;
+}
+.template-summary dt {
+  color: var(--text-secondary);
+}
+.template-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

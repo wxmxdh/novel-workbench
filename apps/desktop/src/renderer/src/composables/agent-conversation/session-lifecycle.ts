@@ -1,0 +1,183 @@
+import { createScopedTranslator } from "../../i18n";
+import type { AgentConversationContext } from "./context";
+import { cloneMessage } from "./clone";
+import { finalizeUnfinishedMessageTools } from "./attempt-state";
+import { id } from "./shared";
+
+const t = createScopedTranslator("workspace.sessionLifecycle");
+
+type SessionLifecycleContext = Pick<
+  AgentConversationContext,
+  | "pendingAttemptId"
+  | "activeRunId"
+  | "newConversation"
+  | "epoch"
+  | "unconfirmedUserMessageId"
+  | "clearIdleTimer"
+  | "submitting"
+  | "stopping"
+  | "runtime"
+  | "conversationError"
+  | "handledEventIds"
+  | "finishedRunIds"
+  | "runMessageIds"
+  | "turnCheckpointByRun"
+  | "subagentTurnCheckpointByRun"
+  | "seenTurnIds"
+  | "seenSubagentTurnIds"
+  | "observedRunByAttempt"
+  | "approvalModeByAttempt"
+  | "approvalModeByRun"
+  | "userInput"
+  | "flushPendingAgentTextDelta"
+  | "messages"
+  | "messageMutations"
+  | "finalizeRunningSubagents"
+  | "runPersistenceBatch"
+  | "stopStreamingMessages"
+  | "storeCurrentConversation"
+  | "resetTransientConversationState"
+  | "nextConversationTimestamp"
+  | "sessionId"
+  | "draft"
+  | "currentCreatedAt"
+  | "currentUpdatedAt"
+  | "isBusy"
+  | "storedConversations"
+  | "historyOperationPending"
+  | "selectedModelId"
+  | "thinkingLevel"
+  | "agentTeamMode"
+  | "webSearchEnabled"
+  | "configuredModels"
+  | "defaultModelId"
+  | "approvalMode"
+  | "temperature"
+  | "hasRunSettingsPreference"
+>;
+export function cancelPendingGeneration(ctx: SessionLifecycleContext): boolean {
+  if (ctx.pendingAttemptId.value === null || ctx.activeRunId.value !== null) {
+    return false;
+  }
+  ctx.newConversation();
+  return true;
+}
+export function resetTransientConversationState(
+  ctx: SessionLifecycleContext
+): void {
+  ctx.epoch += 1;
+  ctx.unconfirmedUserMessageId = undefined;
+  ctx.clearIdleTimer();
+  ctx.submitting.value = false;
+  ctx.stopping.value = false;
+  ctx.pendingAttemptId.value = null;
+  ctx.activeRunId.value = null;
+  ctx.runtime.value = null;
+  ctx.conversationError.value = null;
+  ctx.handledEventIds.clear();
+  ctx.finishedRunIds.clear();
+  ctx.runMessageIds.clear();
+  ctx.turnCheckpointByRun.clear();
+  ctx.subagentTurnCheckpointByRun.clear();
+  ctx.seenTurnIds.clear();
+  ctx.seenSubagentTurnIds.clear();
+  ctx.observedRunByAttempt.clear();
+  ctx.approvalModeByAttempt.clear();
+  ctx.approvalModeByRun.clear();
+  ctx.userInput.clear();
+}
+export function stopStreamingMessages(ctx: SessionLifecycleContext): void {
+  ctx.flushPendingAgentTextDelta();
+  const completedAt = new Date().toISOString();
+  for (const message of ctx.messages.value) {
+    if (message.status !== "streaming") continue;
+    message.status = "stopped";
+    if (message.retry) delete message.retry;
+    ctx.finalizeRunningSubagents(
+      message,
+      "stopped",
+      completedAt,
+      t("theConversationWasSwitchedOrClosedSubtasksWereAlso")
+    );
+    finalizeUnfinishedMessageTools(
+      message,
+      completedAt,
+      t("theConversationWasSwitchedOrClosedBeforeToolCalls")
+    );
+    for (const run of message.subagentRuns ?? []) {
+      if (run.retry) delete run.retry;
+    }
+    if (message.processingStartedAt && !message.processingCompletedAt) {
+      message.processingCompletedAt = completedAt;
+    }
+  }
+}
+export function newConversation(
+  ctx: SessionLifecycleContext,
+  sessionId?: string
+): void {
+  if (ctx.historyOperationPending.value) return;
+  ctx.runPersistenceBatch(() => {
+    ctx.stopStreamingMessages();
+    ctx.storeCurrentConversation();
+    ctx.resetTransientConversationState();
+    const timestamp = ctx.nextConversationTimestamp();
+    ctx.sessionId.value =
+      typeof sessionId === "string" && sessionId ? sessionId : id("session");
+    ctx.messages.value = [];
+    ctx.draft.value = "";
+    ctx.currentCreatedAt.value = timestamp;
+    ctx.currentUpdatedAt.value = timestamp;
+  });
+}
+export function selectConversation(
+  ctx: SessionLifecycleContext,
+  nextSessionId: string
+): boolean {
+  if (nextSessionId === ctx.sessionId.value) return true;
+  if (ctx.isBusy.value) return false;
+  // A selectable conversation should already be idle. Normalize any stale
+  // presentation state before persisting so a detached streaming card cannot
+  // be restored without an owning run.
+  let selected = false;
+  ctx.runPersistenceBatch(() => {
+    ctx.stopStreamingMessages();
+    ctx.storeCurrentConversation();
+    const selectedConversation = ctx.storedConversations.value.find(
+      (conversation) => conversation.sessionId === nextSessionId
+    );
+    if (!selectedConversation) return;
+    ctx.resetTransientConversationState();
+    ctx.sessionId.value = selectedConversation.sessionId;
+    ctx.messageMutations.replaceLoaded(
+      selectedConversation.messages.map(cloneMessage)
+    );
+    ctx.draft.value = selectedConversation.draft;
+    ctx.approvalMode.value = selectedConversation.approvalMode;
+    ctx.temperature.value = selectedConversation.temperature;
+    if (selectedConversation.runSettings) {
+      ctx.hasRunSettingsPreference = true;
+      ctx.selectedModelId.value =
+        selectedConversation.runSettings.selectedModelId;
+      ctx.thinkingLevel.value = selectedConversation.runSettings.thinkingLevel;
+      ctx.agentTeamMode.value =
+        selectedConversation.runSettings.agentTeamMode ?? "normal";
+      ctx.webSearchEnabled.value =
+        selectedConversation.runSettings.webSearchEnabled === true;
+    } else {
+      ctx.hasRunSettingsPreference = false;
+      const model =
+        ctx.configuredModels.value.find(
+          (item) => item.id === ctx.defaultModelId.value
+        ) ?? ctx.configuredModels.value[0];
+      ctx.selectedModelId.value = model?.id ?? "";
+      ctx.thinkingLevel.value = model?.defaultThinkingLevel ?? "medium";
+      ctx.agentTeamMode.value = "normal";
+      ctx.webSearchEnabled.value = false;
+    }
+    ctx.currentCreatedAt.value = selectedConversation.createdAt;
+    ctx.currentUpdatedAt.value = selectedConversation.updatedAt;
+    selected = true;
+  });
+  return selected;
+}

@@ -1,0 +1,5 @@
+extends: ./electron-builder.yml
+directories:
+  output: release-workflow-20261011
+extraMetadata:
+  localBuild: workflow-20261011-ui

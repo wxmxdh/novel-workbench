@@ -1,0 +1,322 @@
+<script setup lang="ts">
+import { createScopedTranslator } from "../i18n";
+import { computed, nextTick, ref } from "vue";
+import {
+  isDeepWriteSiteOfficialModel,
+  type ModelConfigInput,
+  type ModelSettings,
+  type ModelSettingsInput
+} from "@deepwrite/contracts";
+import { useModelProviderGroups } from "../composables/useModelProviderGroups";
+import { useModelSettingsDraft } from "../composables/useModelSettingsDraft";
+import {
+  builtinProviderSets,
+  collectUserProviderIds
+} from "../utils/customModelProvider";
+import AppIcon from "./AppIcon.vue";
+import ModelAdvancedConfigDialog from "./ModelAdvancedConfigDialog.vue";
+import ModelEditorPanel from "./ModelEditorPanel.vue";
+import { MODEL_PROVIDER_OPTIONS } from "./modelProviderPresets";
+import { thinkingLabel } from "./modelSettingsDraft";
+
+const t = createScopedTranslator("components.modelSettingsFeature");
+
+const props = withDefaults(
+  defineProps<{
+    active?: boolean;
+    modelScope?: "all" | "custom";
+    embedded?: boolean;
+    modelSettings: ModelSettings | null;
+    modelLoading: boolean;
+    modelSaving: boolean;
+    modelError: string | null;
+    modelTestMessage: string | null;
+    testingModelId: string | null;
+  }>(),
+  {
+    active: false,
+    modelScope: "all",
+    embedded: false
+  }
+);
+
+const emit = defineEmits<{
+  saveModels: [settings: ModelSettingsInput];
+  testModel: [model: ModelConfigInput];
+}>();
+
+const modelConfigScrollArea = ref<HTMLElement | null>(null);
+function scrollModelEditorIntoView(): void {
+  void nextTick(() => {
+    modelConfigScrollArea.value
+      ?.querySelector<HTMLElement>(".model-editor")
+      ?.scrollIntoView({ block: "nearest", behavior: "auto" });
+  });
+}
+
+const {
+  draftModels,
+  draftDefaultModelId,
+  modelEditor,
+  advancedConfigModel,
+  modelConfigRows,
+  createModel,
+  editModel,
+  saveModelEditor,
+  testDraftModel,
+  removeModel,
+  openAdvancedConfig,
+  closeAdvancedConfig,
+  saveAdvancedConfig,
+  setDefaultModel
+} = useModelSettingsDraft(props, {
+  saveModels: (settings) => emit("saveModels", settings),
+  testModel: (model) => emit("testModel", model),
+  editorOpened: scrollModelEditorIntoView
+});
+const { modelProviderGroups, expandedProviders, toggleProvider } =
+  useModelProviderGroups(modelConfigRows);
+const knownUserProviders = computed(() =>
+  collectUserProviderIds(
+    draftModels.value
+      .filter((model) => !model.managedBy)
+      .map((model) => model.provider),
+    builtinProviderSets(MODEL_PROVIDER_OPTIONS).values
+  )
+);
+</script>
+
+<template>
+  <section
+    class="workspace-settings-panel is-model-config"
+    :class="{ 'is-embedded': embedded }"
+  >
+    <header v-if="!embedded">
+      <div>
+        <span class="dialog-eyebrow">DeepWrite</span>
+        <h2>{{ t("customModelSettings") }}</h2>
+      </div>
+    </header>
+
+    <div class="dialog-content model-config-content">
+      <div ref="modelConfigScrollArea" class="model-config-scroll-area">
+        <div v-if="modelLoading" class="dialog-note">
+          {{ t("readingModelSettings") }}
+        </div>
+        <template v-else>
+          <div class="model-list-toolbar">
+            <span class="model-list-summary"
+              >{{
+                t("providersMessage", {
+                  arg0: modelProviderGroups.length ?? ""
+                })
+              }}<span class="model-list-dot">·</span
+              >{{
+                t("modelsMessage", {
+                  arg0: draftModels.length ?? ""
+                })
+              }}</span
+            >
+            <button
+              class="model-list-add"
+              type="button"
+              :disabled="modelSaving || Boolean(modelEditor)"
+              @click="createModel"
+            >
+              <AppIcon name="plus" :size="14" />{{ t("addModel") }}
+            </button>
+          </div>
+          <div v-if="draftModels.length === 0" class="model-empty-state">
+            <strong>{{
+              modelScope === "custom"
+                ? t("noCustomModelsConfigured")
+                : t("noLiveModelsConfigured")
+            }}</strong>
+            <span>{{
+              modelScope === "custom"
+                ? t("afterAddingACustomModelTestItsConnectionManage")
+                : t("thisConversationStillUsesDeepWriteFauxAddAModel")
+            }}</span>
+          </div>
+
+          <section
+            v-for="group in modelProviderGroups"
+            :key="group.key"
+            class="model-provider-group"
+            :class="{ 'is-expanded': expandedProviders.has(group.key) }"
+          >
+            <button
+              class="model-provider-heading"
+              type="button"
+              :aria-expanded="expandedProviders.has(group.key)"
+              @click="toggleProvider(group.key)"
+            >
+              <span class="model-provider-icon" aria-hidden="true"
+                ><AppIcon name="model" :size="16"
+              /></span>
+              <strong>{{ group.label }}</strong>
+              <span class="model-provider-count">{{
+                t("modelsMessage", {
+                  arg0: group.count ?? ""
+                })
+              }}</span>
+              <AppIcon
+                name="chevron"
+                :size="14"
+                :class="{ 'is-expanded': expandedProviders.has(group.key) }"
+              />
+            </button>
+            <div
+              v-show="expandedProviders.has(group.key)"
+              class="model-provider-content"
+            >
+              <template v-for="row in group.rows" :key="row.key">
+                <ModelEditorPanel
+                  v-if="row.type === 'editor' && modelEditor"
+                  :model="modelEditor"
+                  :editing="Boolean(modelEditor.originalId)"
+                  :saving="modelSaving"
+                  :testing-model-id="testingModelId"
+                  :known-user-providers="knownUserProviders"
+                  @cancel="modelEditor = null"
+                  @save="saveModelEditor"
+                  @test="emit('testModel', $event)"
+                />
+
+                <article
+                  v-else-if="row.type === 'model'"
+                  class="model-card model-config-card"
+                  :class="{
+                    'is-default': draftDefaultModelId === row.model.id
+                  }"
+                >
+                  <div class="model-config-details">
+                    <strong>{{ row.model.label }}</strong>
+                    <small>
+                      {{
+                        row.model.managedBy === "deepwrite-official"
+                          ? t("legacyOfficialModels")
+                          : row.model.managedBy === "deepwrite-free"
+                            ? isDeepWriteSiteOfficialModel(row.model)
+                              ? t("officialSiteModels")
+                              : t("deepWriteFreeModels")
+                            : row.model.provider
+                      }}
+                      · {{ row.model.modelId }} · {{ row.model.api }}
+                    </small>
+                    <small v-if="row.model.credentialProfileLabel">
+                      {{
+                        t("accountNameValue", {
+                          arg0: row.model.credentialProfileLabel
+                        })
+                      }}
+                    </small>
+                    <small>
+                      {{
+                        row.model.reasoning
+                          ? t("reasoningValue", {
+                              arg0: thinkingLabel(
+                                row.model.defaultThinkingLevel
+                              )
+                            })
+                          : t("temperatureValue", {
+                              arg0: row.model.temperatureOptions.join(" / ")
+                            })
+                      }}
+                      ·
+                      {{
+                        row.model.hasApiKey || row.model.apiKey
+                          ? t("keyConfigured")
+                          : row.model.managedBy
+                            ? t("managedAccess")
+                            : t("noKeyConfigured")
+                      }}
+                    </small>
+                  </div>
+                  <div class="model-card-actions">
+                    <button
+                      type="button"
+                      :class="{
+                        'is-active': draftDefaultModelId === row.model.id
+                      }"
+                      :disabled="modelSaving || Boolean(modelEditor)"
+                      @click="setDefaultModel(row.model.id)"
+                    >
+                      {{
+                        modelSaving && draftDefaultModelId === row.model.id
+                          ? t("saving")
+                          : draftDefaultModelId === row.model.id
+                            ? t("default")
+                            : t("setAsDefault")
+                      }}
+                    </button>
+                    <button
+                      v-if="!row.model.managedBy"
+                      type="button"
+                      :disabled="modelSaving"
+                      @click="editModel(row.model)"
+                    >
+                      {{ t("edit") }}
+                    </button>
+                    <button
+                      type="button"
+                      :disabled="testingModelId !== null"
+                      :title="t('testTheCurrentUnsavedSettings')"
+                      @click="testDraftModel(row.model)"
+                    >
+                      {{
+                        testingModelId === row.model.id
+                          ? t("testing")
+                          : t("testConnection")
+                      }}
+                    </button>
+                    <button
+                      v-if="!row.model.managedBy"
+                      type="button"
+                      :disabled="modelSaving || Boolean(modelEditor)"
+                      :title="t('configureContextLengthAndMaximumOutputLength')"
+                      @click="openAdvancedConfig(row.model)"
+                    >
+                      {{ t("advancedSettings") }}
+                    </button>
+                    <button
+                      v-if="!row.model.managedBy"
+                      class="is-danger"
+                      type="button"
+                      :disabled="modelSaving || Boolean(modelEditor)"
+                      @click="removeModel(row.model.id)"
+                    >
+                      {{ t("delete") }}
+                    </button>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </section>
+
+          <ModelEditorPanel
+            v-if="modelEditor && !modelEditor.originalId"
+            :key="modelEditor.id"
+            :model="modelEditor"
+            :editing="false"
+            :saving="modelSaving"
+            :testing-model-id="testingModelId"
+            :known-user-providers="knownUserProviders"
+            @cancel="modelEditor = null"
+            @save="saveModelEditor"
+            @test="emit('testModel', $event)"
+          />
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <ModelAdvancedConfigDialog
+    :model="advancedConfigModel"
+    :busy="modelSaving"
+    @close="closeAdvancedConfig"
+    @save="saveAdvancedConfig"
+  />
+</template>
+
+<style scoped src="../styles/model-settings-feature.css"></style>

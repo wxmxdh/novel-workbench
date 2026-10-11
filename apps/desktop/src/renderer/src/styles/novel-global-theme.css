@@ -1,0 +1,54 @@
+/* Global palette foundation; runtime appearance values remain authoritative. */
+:root {
+  --paper: #f2eee7;
+  --paper-deep: #ebe3d8;
+  --paper-light: #faf7f1;
+  --background: var(--paper);
+  --ink: #2d2924;
+  --ink-light: #4a453e;
+  --muted: #756d63;
+  --muted-light: #9e958b;
+  --line: rgb(98 81 63 / 0.13);
+  --line-strong: rgb(98 81 63 / 0.22);
+  --coral: #b85b44;
+  --coral-hover: #a04e3a;
+  --coral-light: rgb(184 91 68 / 0.1);
+  --success: #5a8a5e;
+  --success-light: rgb(90 138 94 / 0.1);
+  --shadow: rgb(67 51 35 / 0.08);
+  --shadow-md: rgb(67 51 35 / 0.12);
+  --surface-main: var(--paper);
+}
+
+/* Filter definitions must not create a line box above the application. */
+.otter-glass-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Keep the existing sidebar and popup geometry while adding a restrained glass layer. */
+html[data-translucent-sidebar="true"] :where(.left-sidebar, .settings-sidebar) {
+  -webkit-backdrop-filter: blur(5px) var(--otter-glass-filter, none)
+    saturate(1.03);
+  backdrop-filter: blur(5px) var(--otter-glass-filter, none) saturate(1.03);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.28);
+}
+
+html[data-theme]
+  :where(.popup-select-menu, .section-action-menu, .tree-node-action-menu) {
+  background-color: color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(1.04);
+  backdrop-filter: blur(8px) saturate(1.04);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 12px 32px var(--shadow-md);
+}
+
+html[data-theme]
+  :where(.left-sidebar.glass-fallback, .settings-sidebar.glass-fallback) {
+  -webkit-backdrop-filter: blur(10px) saturate(1.03);
+  backdrop-filter: blur(10px) saturate(1.03);
+}

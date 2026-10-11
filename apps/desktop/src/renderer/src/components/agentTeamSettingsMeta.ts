@@ -1,0 +1,56 @@
+import { createScopedTranslator } from "../i18n";
+import type {
+  BuiltInReasoningLevel,
+  WorkspaceAgentId
+} from "@deepwrite/contracts";
+
+const t = createScopedTranslator("components.agentTeamSettingsMeta");
+
+export interface ParentAgentMeta {
+  id: WorkspaceAgentId;
+  label: string;
+  description: string;
+}
+
+export const SHORT_PARENT_AGENT = {
+  id: "short",
+  get label() {
+    return t("shortStoryAgent");
+  },
+  get description() {
+    return t("configureSpecialistAssistantsForTheUnifiedShortStoryAgent");
+  }
+} as const satisfies ParentAgentMeta;
+
+export const SCRIPT_PARENT_AGENTS = [
+  {
+    id: "script",
+    get label() {
+      return t("screenplayAgent");
+    },
+    get description() {
+      return t("configureSpecialistAssistantsForTheUnifiedScreenplayAgentTo");
+    }
+  }
+] as const satisfies readonly ParentAgentMeta[];
+
+export const BUILT_IN_THINKING_LABELS: Record<BuiltInReasoningLevel, string> = {
+  get minimal() {
+    return t("minimal");
+  },
+  get low() {
+    return t("low");
+  },
+  get medium() {
+    return t("medium");
+  },
+  get high() {
+    return t("high");
+  },
+  get xhigh() {
+    return t("extraHigh");
+  },
+  get max() {
+    return t("maximum");
+  }
+};

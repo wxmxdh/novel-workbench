@@ -1,0 +1,50 @@
+import { buildMaterialCatalogPrompt } from "./material-catalog";
+import { materialCatalogEntries } from "./material-query-runtime";
+import type { AgentRunInput } from "./runtime-types";
+
+/** Shared material directory only; no parent history, skills, or material bodies. */
+export function buildWorkspaceMaterialContext(input: AgentRunInput): string {
+  const context = input.workspaceContext;
+  const materials = context?.materialCatalog
+    ? materialCatalogEntries(context.materialCatalog)
+    : (context?.attachedMaterials ?? []);
+  const profile = input.scriptAgentProfile ?? input.agentProfile;
+  const readable = profile
+    ? materials.filter(
+        (item) =>
+          item.kind !== undefined &&
+          profile.readAccess.material.includes(item.kind)
+      )
+    : input.longAgentProfile
+      ? materials.filter(
+          (item) =>
+            item.kind !== undefined &&
+            input.longAgentProfile!.readAccess.materialKinds.includes(item.kind)
+        )
+      : materials;
+  return buildMaterialCatalogPrompt(readable);
+}
+
+export function buildSubagentMaterialContext(input: AgentRunInput): string {
+  return [
+    buildWorkspaceMaterialContext(input),
+    ...materialCatalogNotes(input)
+  ].join("\n");
+}
+
+export function materialCatalogNotes(input: AgentRunInput): string[] {
+  const catalog = input.workspaceContext?.materialCatalog;
+  return catalog
+    ? [
+        `本轮可查询素材共 ${catalog.total} 条。`,
+        ...(catalog.nextCursor !== undefined
+          ? [
+              `目录还有后续条目，调用 query_linked_material_entries（mode=list，cursor=${catalog.nextCursor}）继续。`
+            ]
+          : []),
+        ...catalog.notices
+      ]
+    : input.workspaceContext?.materialReadNotice
+      ? [input.workspaceContext.materialReadNotice]
+      : [];
+}

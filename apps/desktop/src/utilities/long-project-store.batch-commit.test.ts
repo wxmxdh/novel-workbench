@@ -1,0 +1,261 @@
+import {
+  FIXED_NOW,
+  createEmptyLongMarkdownFileReference,
+  createFixture,
+  describe,
+  expect,
+  it,
+  join,
+  longChapterBodyFileId,
+  longChapterCardFileId,
+  longChapterCharacterStateFileId,
+  longChapterContinuityFilePath,
+  longChapterForeshadowingChangesFileId,
+  longChapterHandoffFileId,
+  projectTransactionContentSha256,
+  readFile,
+  writeFile
+} from "./long-project-store.test-support";
+
+function chapterFiles(chapterCardId: string) {
+  const storage = projectTransactionContentSha256(chapterCardId).slice(0, 32);
+  const file = (id: string, path: string) =>
+    createEmptyLongMarkdownFileReference(id, path, FIXED_NOW);
+  return {
+    chapterCardId,
+    bodyStatus: "empty" as const,
+    body: file(
+      longChapterBodyFileId(chapterCardId),
+      `long/chapters/${storage}/body.md`
+    ),
+    card: file(
+      longChapterCardFileId(chapterCardId),
+      `long/chapters/${storage}/card.md`
+    ),
+    characterState: file(
+      longChapterCharacterStateFileId(chapterCardId),
+      `long/chapters/${storage}/character-state.md`
+    ),
+    handoff: file(
+      longChapterHandoffFileId(chapterCardId),
+      `long/chapters/${storage}/handoff.md`
+    ),
+    foreshadowingChanges: file(
+      longChapterForeshadowingChangesFileId(chapterCardId),
+      longChapterContinuityFilePath(chapterCardId, "foreshadowing-changes.md")
+    ),
+    worldReveals: null,
+    characterContinuity: [],
+    commitId: null
+  };
+}
+
+describe("LongProjectStore: batch continuity commits", () => {
+  it("stores contiguous chapters in one record and invalidates the batch together", async () => {
+    const { projectStore, created } = await createFixture("batch-commit");
+    const firstChapterId = created.book.workspaceIndex.plot.chapterCards[0]!.id;
+    const volumeId = created.book.workspaceIndex.plot.volumes[0]!.id;
+    const secondChapterId = "chapter_batch_second";
+    const secondFiles = chapterFiles(secondChapterId);
+
+    await projectStore.applyWorkspaceOperations(created.projectDirectory, {
+      batch: {
+        updatedAt: FIXED_NOW,
+        operations: [
+          {
+            type: "chapter.create",
+            chapterCard: {
+              id: secondChapterId,
+              volumeId,
+              primaryArcId: null,
+              title: "批次第二章",
+              narrativeOrder: 2
+            },
+            files: secondFiles
+          }
+        ],
+        documentWrites: []
+      }
+    });
+
+    const opened = await projectStore.openBook(created.projectDirectory);
+    const firstFiles = opened.book.workspaceIndex.chapters.find(
+      ({ chapterCardId }) => chapterCardId === firstChapterId
+    )!;
+    await projectStore.writeDocument(created.projectDirectory, {
+      fileId: firstFiles.body.id,
+      content: "第一章正文已写完，但不生成单独连续性文件。"
+    });
+    await projectStore.writeChapter(created.projectDirectory, {
+      chapterCardId: secondChapterId,
+      body: { content: "第二章正文承接并结束这一批。" },
+      characterState: { content: "两章结束后的汇总章末状态。" },
+      handoff: { content: "下一章从整批结束后的状态继续。" }
+    });
+
+    const committed = await projectStore.commitChapter(
+      created.projectDirectory,
+      {
+        mode: "text_files_batch",
+        chapterCardIds: [firstChapterId, secondChapterId],
+        checkpointChapterCardId: secondChapterId,
+        foreshadowingBeatDecisions: {},
+        commitMessage: "一次归档连续写完的两章"
+      }
+    );
+    expect(committed.record).toMatchObject({
+      schemaVersion: 5,
+      chapterCardId: secondChapterId,
+      chapterCardIds: [firstChapterId, secondChapterId],
+      checkpointChapterCardId: secondChapterId,
+      committedThroughChapterId: secondChapterId
+    });
+    expect(committed.record.chapterBodyEvidence).toEqual([
+      {
+        chapterCardId: firstChapterId,
+        bodyFileId: firstFiles.body.id,
+        sha256: createHash("sha256")
+          .update("第一章正文已写完，但不生成单独连续性文件。", "utf8")
+          .digest("hex")
+      },
+      {
+        chapterCardId: secondChapterId,
+        bodyFileId: secondFiles.body.id,
+        sha256: createHash("sha256")
+          .update("第二章正文承接并结束这一批。", "utf8")
+          .digest("hex")
+      }
+    ]);
+
+    const afterCommit = await projectStore.openBook(created.projectDirectory);
+    expect(afterCommit.book.workspaceIndex.ledger.commits).toHaveLength(1);
+    expect(afterCommit.book.workspaceIndex.ledger.commits[0]).toMatchObject({
+      id: committed.record.id,
+      mode: "text_files_batch",
+      chapterCardIds: [firstChapterId, secondChapterId],
+      checkpointChapterCardId: secondChapterId
+    });
+    expect(
+      afterCommit.book.workspaceIndex.chapters.map(
+        ({ chapterCardId, commitId, bodyEvidenceStatus }) => ({
+          chapterCardId,
+          commitId,
+          bodyEvidenceStatus
+        })
+      )
+    ).toEqual([
+      {
+        chapterCardId: firstChapterId,
+        commitId: committed.record.id,
+        bodyEvidenceStatus: "current"
+      },
+      {
+        chapterCardId: secondChapterId,
+        commitId: committed.record.id,
+        bodyEvidenceStatus: "current"
+      }
+    ]);
+    await projectStore.writeDocument(created.projectDirectory, {
+      fileId: firstFiles.body.id,
+      content: "第一章正文已经被修改，需要重新核对剧情记录。"
+    });
+    const afterEdit = await projectStore.openBook(created.projectDirectory);
+    expect(
+      afterEdit.book.workspaceIndex.chapters.find(
+        ({ chapterCardId }) => chapterCardId === firstChapterId
+      )?.bodyEvidenceStatus
+    ).toBe("needs-review");
+    await writeFile(
+      join(created.projectDirectory, firstFiles.body.path),
+      "正文在应用外又发生了修改。",
+      "utf8"
+    );
+    await expect(
+      projectStore.getChapterBodyEvidenceStatus(
+        created.projectDirectory,
+        firstChapterId
+      )
+    ).resolves.toBe("needs-review");
+    expect(
+      committed.record.continuityFiles.map(({ fileId }) => fileId)
+    ).toEqual([secondFiles.characterState.id, secondFiles.handoff.id]);
+    await expect(
+      projectStore.readDocument(created.projectDirectory, {
+        fileId: firstFiles.characterState.id
+      })
+    ).resolves.toMatchObject({ content: "" });
+
+    const recordPath = join(
+      created.projectDirectory,
+      afterCommit.book.workspaceIndex.ledger.commits[0]!.recordFile.path
+    );
+    expect(await readFile(recordPath, "utf8")).toContain('"schemaVersion": 5');
+
+    const reorderBatch = {
+      updatedAt: FIXED_NOW,
+      operations: [
+        {
+          type: "chapter.reorder" as const,
+          volumeId,
+          orderedIds: [secondChapterId, firstChapterId]
+        }
+      ],
+      documentWrites: []
+    };
+    const reorderPreview = await projectStore.previewWorkspaceOperations(
+      created.projectDirectory,
+      reorderBatch
+    );
+    const reordered = await projectStore.applyWorkspaceOperations(
+      created.projectDirectory,
+      {
+        batch: {
+          ...reorderBatch,
+          expectedImpact: reorderPreview.confirmation
+        }
+      }
+    );
+    expect(reordered.book.workspaceIndex.ledger.commits).toHaveLength(1);
+    expect(
+      [...reordered.book.workspaceIndex.plot.chapterCards]
+        .sort((left, right) => left.narrativeOrder - right.narrativeOrder)
+        .map(({ id }) => id)
+    ).toEqual([secondChapterId, firstChapterId]);
+    expect(reordered.book.workspaceIndex.ledger.committedThroughChapterId).toBe(
+      firstChapterId
+    );
+
+    const deletionBatch = {
+      updatedAt: FIXED_NOW,
+      operations: [{ type: "chapter.delete" as const, id: firstChapterId }],
+      documentWrites: []
+    };
+    const preview = await projectStore.previewWorkspaceOperations(
+      created.projectDirectory,
+      deletionBatch
+    );
+    const deleted = await projectStore.applyWorkspaceOperations(
+      created.projectDirectory,
+      {
+        batch: {
+          ...deletionBatch,
+          expectedImpact: preview.confirmation
+        }
+      }
+    );
+    expect(deleted.book.workspaceIndex.ledger.commits).toEqual([]);
+    expect(
+      deleted.book.workspaceIndex.ledger.committedThroughChapterId
+    ).toBeNull();
+    expect(deleted.book.workspaceIndex.chapters).toEqual([
+      expect.objectContaining({
+        chapterCardId: secondChapterId,
+        commitId: null
+      })
+    ]);
+    await expect(readFile(recordPath, "utf8")).rejects.toMatchObject({
+      code: "ENOENT"
+    });
+  });
+});
+import { createHash } from "node:crypto";
